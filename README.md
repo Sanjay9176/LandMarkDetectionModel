@@ -1,98 +1,126 @@
-Landmark Classification using VGG19
+Landmark Image Classification using VGG19
 
 Overview
 
-This project is a deep learning-based classification model using the VGG19 architecture to classify landmarks from images. The dataset is preprocessed and trained using TensorFlow and Keras.
+This project focuses on classifying landmark images using a deep learning model based on VGG19. The goal is to preprocess the dataset, train a neural network, and evaluate its performance. The model uses TensorFlow and Keras, employing data augmentation and feature extraction techniques to improve accuracy.
 
 Features
 
-Custom Dataset Handling: Reads and preprocesses images from a structured dataset.
+Automatically loads and preprocesses images from a dataset.
 
-Label Encoding: Uses LabelEncoder to convert categorical labels to numerical values.
+Implements data augmentation for better generalization.
 
-Data Augmentation: Uses ImageDataGenerator for improved generalization.
+Utilizes the pre-trained VGG19 model for feature extraction.
 
-Pretrained Model (VGG19): Fine-tuned to classify landmarks.
+Trains a neural network to classify landmark images.
 
-Custom Training Loop: Uses GradientTape for manual optimization.
+Evaluates the model and visualizes accuracy/loss trends.
 
 Installation
 
-To set up the project, clone the repository and install the required dependencies:
+Before running the code, install the required Python packages:
 
-pip install tensorflow pandas numpy opencv-python matplotlib scikit-learn pillow
+pip install pandas numpy tensorflow scikit-learn matplotlib opencv-python pillow
 
-Usage
+Dataset Setup
 
-Run the main script to preprocess data and train the model:
+Ensure the CSV file (train.csv) is present in the working directory.
 
-python train.py
+Place landmark images inside the photos/ directory, structured in a hierarchical format.
 
-Folder Structure
+How to Run
 
-├── train.csv              # CSV file containing image metadata
-├── photos/                # Folder containing landmark images
-├── Model.h5               # Saved trained model
-├── README.md              # Project documentation
-└── train.py               # Main script for training and evaluation
+1. Import necessary libraries
 
-Areas for Improvement
+import pandas as pd
+import numpy as np
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.applications.vgg19 import VGG19
+from tensorflow.keras.layers import *
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.optimizers import RMSprop
+from sklearn.preprocessing import LabelEncoder
+import cv2
+import os
+import random
+from matplotlib import pyplot as plt
+from PIL import Image
 
-1. Optimize Image Loading
+2. Load and preprocess the dataset
 
-Current Code:
+df = pd.read_csv("train.csv")
+df = df[df["id"].str.startswith(('00'), na=False)]
+
+3. Encode landmark labels
+
+lencoder = LabelEncoder()
+lencoder.fit(df["landmark_id"])
+def encode_label(label):
+    return lencoder.transform(label)
+def decode_label(label):
+    return lencoder.inverse_transform(label)
+
+4. Define function to retrieve images
 
 def get_image_from_numbers(num, df):
     fname, label = df.iloc[num, :]
-    folder = base_path + "0/0/" + fname
+    full_path = f"./photos/{fname}.jpg"
+    im = cv2.imread(full_path)
+    if im is None:
+        print("Error loading image:", full_path)
+        return None, None
+    return im, label
 
-Optimization: Instead of hardcoded folder paths, dynamically construct paths using os.path.join().
+5. Build the deep learning model
 
-folder = os.path.join(base_path, fname[0], fname[1], fname[2], fname)
-
-2. Batch Processing with Generators
-
-Current Code:
-
-for it in range(int(np.ceil(len(train) / batch_size))):
-    x_train, y_train = get_batch(train, it * batch_size, batch_size)
-
-Optimization: Use ImageDataGenerator.flow_from_dataframe() instead of manual batch processing for better efficiency.
-
-train_datagen.flow_from_dataframe(train, directory=base_path, target_size=(224,224), batch_size=batch_size)
-
-3. Improve Model Performance with Transfer Learning
-
-Current Code:
-
+learning_rate = 0.0001
+loss_function = "sparse_categorical_crossentropy"
 source_model = VGG19(weights=None)
+model = Sequential()
+for layer in source_model.layers[:-1]:
+    model.add(layer)
+model.add(Dense(len(df["landmark_id"].unique()), activation="softmax"))
+model.compile(optimizer=RMSprop(learning_rate=learning_rate), loss=loss_function, metrics=["accuracy"])
 
-Optimization: Use pretrained ImageNet weights to improve accuracy and reduce training time.
+6. Train the model
 
-source_model = VGG19(weights='imagenet', include_top=False)
+batch_size = 16
+epochs = 10
+train, val = np.split(df.sample(frac=1), [int(0.8 * len(df))])
+for e in range(epochs):
+    print(f"Epoch {e + 1}/{epochs}")
+    for it in range(int(np.ceil(len(train) / batch_size))):
+        x_train, y_train = get_batch(train, it * batch_size, batch_size)
+        model.fit(x_train, y_train, epochs=1, verbose=1)
 
-4. Use ModelCheckpoint for Best Model Saving
-
-Current Code:
+7. Save and evaluate the model
 
 model.save("Model.h5")
+model.evaluate(x_test, y_test)
 
-Optimization: Instead of saving at the end, save only the best model using:
+Results
 
-checkpoint = keras.callbacks.ModelCheckpoint("best_model.h5", save_best_only=True, monitor='val_accuracy')
+The model is trained for multiple epochs and achieves reasonable accuracy. You can further improve the model by:
 
-5. Replace Manual Training with model.fit()
+Fine-tuning VGG19 layers
 
-Current Code:
+Experimenting with different optimizers and learning rates
 
-for e in range(epochs):
-    for it in range(int(np.ceil(len(train) / batch_size))):
-        train_step(x_train, y_train)
+Implementing data augmentation techniques
 
-Optimization: Replace with standard Keras training for better efficiency.
+Improvements
 
-model.fit(train_generator, validation_data=val_generator, epochs=epochs, callbacks=[checkpoint])
+Optimize Data Loading: Use tf.data.Dataset instead of manual loading for efficiency.
 
-Contributing
+Better Augmentation: Implement Keras ImageDataGenerator to augment training data.
 
-Feel free to contribute to this project by optimizing the code further or adding new features!
+Fine-Tuning VGG19: Allow some layers to be trainable for improved accuracy.
+
+Batch Processing: Utilize NumPy arrays instead of lists for faster processing.
+
+Author
+
+Sanjay Kumar Purohit
+
