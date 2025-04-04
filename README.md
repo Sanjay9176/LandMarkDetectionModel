@@ -129,7 +129,8 @@ for it in range(int(np.ceil(len(val) / batch_size))):
 4. **Hyperparameter Tuning** - Experiment with different optimizers (Adam, SGD) and learning rates to improve performance.
 5. **Efficient Image Loading** - Instead of loading all images into memory, use `tf.data.Dataset` for efficient image processing.
 
-##Impoertant Note
+## Impoertant Note
+**Download the DataSet form this 
 
 ## Author
 [Sanjay Kumar Purohit]
