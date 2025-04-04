@@ -130,7 +130,11 @@ for it in range(int(np.ceil(len(val) / batch_size))):
 5. **Efficient Image Loading** - Instead of loading all images into memory, use `tf.data.Dataset` for efficient image processing.
 
 ## Impoertant Note
-**Download the DataSet form this 
+**Download the DataSet form this https://s3.amazonaws.com/google-landmark/train/images_000.tar because the Dateset is imcomplete and the reason for this is that the file size is larger and lfs was also not supporting more file(lfs limit is reached).
+**Make sure u download the Dataset as hexdecimal eg: given below.
+**https://s3.amazonaws.com/google-landmark/train/images_001.tar
+**https://s3.amazonaws.com/google-landmark/train/images_002.tar
+**....till https://s3.amazonaws.com/google-landmark/train/images_00f.tar
 
 ## Author
 [Sanjay Kumar Purohit]
